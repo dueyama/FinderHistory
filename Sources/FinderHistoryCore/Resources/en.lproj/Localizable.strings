@@ -1,0 +1,34 @@
+"app.name" = "FinderHistory";
+"action.refresh" = "Refresh";
+"action.enableFinderAccess" = "Enable Finder Access";
+"action.openAccessibilitySettings" = "Open Accessibility Settings";
+"action.clearHistory" = "Clear History";
+"action.settings" = "Settings";
+"action.quit" = "Quit";
+
+"history.empty.title" = "No closed Finder windows yet";
+"history.empty.description" = "Close a Finder window and it will appear here.";
+"history.missing" = "Missing";
+
+"status.finder.unknown" = "Finder access has not been checked yet.";
+"status.finder.available" = "Watching %d Finder windows.";
+"status.finder.unavailable" = "Finder access failed: %@";
+
+"settings.history.title" = "History";
+"settings.history.limit" = "Remember %d closed windows";
+"settings.history.description" = "FinderHistory keeps only the most recent folders, up to this limit.";
+"settings.launch.title" = "Startup";
+"settings.launch.login" = "Launch at Login";
+"settings.automation.title" = "Finder Access";
+"settings.automation.unknown" = "FinderHistory needs Accessibility permission to read Finder window locations.";
+"settings.automation.available" = "Finder Accessibility access is available.";
+"settings.automation.unavailable" = "Finder Accessibility access failed: %@";
+"settings.automation.check" = "Check Finder Access";
+"settings.privacy.title" = "Privacy";
+"settings.privacy.localOnly" = "History is stored locally in Application Support. FinderHistory does not use the network.";
+
+"error.accessibilityPermissionRequired" = "Accessibility permission is required. Enable FinderHistory in System Settings > Privacy & Security > Accessibility.";
+"error.accessibilityAttributeFailed" = "Could not read Finder accessibility attribute %@ (%d).";
+"error.appleScriptFailed" = "Could not read Finder windows through Automation: %@";
+"error.finderNotRunning" = "Finder is not running.";
+"error.folderMissing" = "The folder no longer exists: %@";

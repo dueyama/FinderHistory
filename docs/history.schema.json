@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/dueyama/FinderHistory/main/docs/history.schema.json",
+  "title": "FinderHistory History Document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "records"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "url", "displayName", "parentPath", "closedAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parentPath": {
+            "type": "string"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "windowState": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "bounds": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["left", "top", "right", "bottom"],
+                "properties": {
+                  "left": {
+                    "type": "integer"
+                  },
+                  "top": {
+                    "type": "integer"
+                  },
+                  "right": {
+                    "type": "integer"
+                  },
+                  "bottom": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "viewStyle": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

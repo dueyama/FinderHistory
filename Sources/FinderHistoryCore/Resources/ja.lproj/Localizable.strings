@@ -1,0 +1,34 @@
+"app.name" = "FinderHistory";
+"action.refresh" = "更新";
+"action.enableFinderAccess" = "Finder アクセスを許可";
+"action.openAccessibilitySettings" = "アクセシビリティ設定を開く";
+"action.clearHistory" = "履歴を消去";
+"action.settings" = "設定";
+"action.quit" = "終了";
+
+"history.empty.title" = "閉じた Finder ウィンドウはまだありません";
+"history.empty.description" = "Finder ウィンドウを閉じると、ここに表示されます。";
+"history.missing" = "見つかりません";
+
+"status.finder.unknown" = "Finder へのアクセスはまだ確認されていません。";
+"status.finder.available" = "Finder ウィンドウを %d 件監視中です。";
+"status.finder.unavailable" = "Finder へのアクセスに失敗しました: %@";
+
+"settings.history.title" = "履歴";
+"settings.history.limit" = "閉じたウィンドウを %d 件記憶";
+"settings.history.description" = "FinderHistory は、この上限まで最近のフォルダだけを保存します。";
+"settings.launch.title" = "起動";
+"settings.launch.login" = "ログイン時に起動";
+"settings.automation.title" = "Finder アクセス";
+"settings.automation.unknown" = "FinderHistory が Finder ウィンドウの場所を読むにはアクセシビリティ許可が必要です。";
+"settings.automation.available" = "Finder のアクセシビリティアクセスは利用できます。";
+"settings.automation.unavailable" = "Finder のアクセシビリティアクセスに失敗しました: %@";
+"settings.automation.check" = "Finder アクセスを確認";
+"settings.privacy.title" = "プライバシー";
+"settings.privacy.localOnly" = "履歴は Application Support にローカル保存されます。FinderHistory はネットワークを使用しません。";
+
+"error.accessibilityPermissionRequired" = "アクセシビリティ許可が必要です。システム設定 > プライバシーとセキュリティ > アクセシビリティで FinderHistory を有効にしてください。";
+"error.accessibilityAttributeFailed" = "Finder のアクセシビリティ属性 %@ を読めませんでした (%d)。";
+"error.appleScriptFailed" = "オートメーションで Finder ウィンドウを読めませんでした: %@";
+"error.finderNotRunning" = "Finder が起動していません。";
+"error.folderMissing" = "フォルダが存在しません: %@";
