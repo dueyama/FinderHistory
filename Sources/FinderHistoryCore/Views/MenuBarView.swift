@@ -102,7 +102,7 @@ public struct MenuBarView: View {
         return ScrollView {
             VStack(spacing: 0) {
                 ForEach(model.history) { entry in
-                    HistoryRowView(entry: entry) {
+                    HistoryRowView(entry: entry, isAvailable: model.isHistoryEntryAvailable(entry)) {
                         model.open(entry)
                         dismiss()
                     }

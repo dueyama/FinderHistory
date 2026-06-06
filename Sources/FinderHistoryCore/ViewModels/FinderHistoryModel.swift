@@ -14,6 +14,7 @@ public final class FinderHistoryModel: ObservableObject {
     @Published public private(set) var finderStatus: FinderAccessStatus = .unknown
     @Published public private(set) var finderWindowCount: Int = 0
     @Published public private(set) var lastErrorMessage: String?
+    @Published private var historyAvailability: [UUID: Bool] = [:]
 
     private let finderClient: FinderClient
     private let pollingService: FinderPollingService
@@ -21,6 +22,8 @@ public final class FinderHistoryModel: ObservableObject {
     private let defaults: UserDefaults
     private let pollInterval: TimeInterval
     private let openQueue: DispatchQueue
+    private let availabilityQueue: DispatchQueue
+    private let availabilityResolver: HistoryAvailabilityResolving
     private let logger = Logger(subsystem: "io.github.dueyama.FinderHistory", category: "history")
     private var previousWindows: [FinderWindowSnapshot]?
     private var timer: Timer?
@@ -32,7 +35,9 @@ public final class FinderHistoryModel: ObservableObject {
         historyStore: HistoryStore,
         defaults: UserDefaults = .standard,
         pollInterval: TimeInterval = 2,
-        openQueue: DispatchQueue = DispatchQueue(label: "io.github.dueyama.FinderHistory.open", qos: .userInitiated)
+        openQueue: DispatchQueue = DispatchQueue(label: "io.github.dueyama.FinderHistory.open", qos: .userInitiated),
+        availabilityQueue: DispatchQueue = DispatchQueue(label: "io.github.dueyama.FinderHistory.availability", qos: .utility),
+        availabilityResolver: HistoryAvailabilityResolving = FileManagerHistoryAvailabilityResolver()
     ) {
         self.finderClient = finderClient
         self.pollingService = FinderPollingService(finderClient: finderClient)
@@ -40,6 +45,8 @@ public final class FinderHistoryModel: ObservableObject {
         self.defaults = defaults
         self.pollInterval = pollInterval
         self.openQueue = openQueue
+        self.availabilityQueue = availabilityQueue
+        self.availabilityResolver = availabilityResolver
 
         do {
             history = HistoryReducer.trimmed(try historyStore.load(), limit: AppPreferences.clampedHistoryLimit(from: defaults))
@@ -59,6 +66,8 @@ public final class FinderHistoryModel: ObservableObject {
                 self?.trimToCurrentLimit()
             }
         }
+
+        refreshAvailability(for: history)
     }
 
     deinit {
@@ -103,6 +112,7 @@ public final class FinderHistoryModel: ObservableObject {
             if loadedHistory != history {
                 history = loadedHistory
             }
+            refreshAvailability(for: loadedHistory)
             logger.debug("Menu opened with Finder history count: \(loadedHistory.count, privacy: .public)")
             lastErrorMessage = nil
         } catch {
@@ -113,6 +123,10 @@ public final class FinderHistoryModel: ObservableObject {
 
     public func requestFinderAccess() {
         pollFinder(askUserIfNeeded: true)
+    }
+
+    func isHistoryEntryAvailable(_ entry: HistoryEntry) -> Bool {
+        historyAvailability[entry.id] ?? true
     }
 
     private func pollFinder(askUserIfNeeded: Bool) {
@@ -181,20 +195,31 @@ public final class FinderHistoryModel: ObservableObject {
     }
 
     public func open(_ entry: HistoryEntry) {
-        guard entry.isAvailable else {
+        guard isHistoryEntryAvailable(entry) else {
             lastErrorMessage = L10n.string("error.folderMissing", entry.url.path)
             return
         }
 
+        let entryID = entry.id
         let url = entry.url
         let windowState = entry.windowState
         let finderClient = finderClient
+        let availabilityResolver = availabilityResolver
 
         logger.debug("Opening Finder history item: \(url.path, privacy: .public)")
         openQueue.async { [weak self] in
+            guard availabilityResolver.folderExists(at: url) else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.historyAvailability[entryID] = false
+                    self?.lastErrorMessage = L10n.string("error.folderMissing", url.path)
+                }
+                return
+            }
+
             do {
                 try finderClient.openFolder(at: url, restoring: windowState)
                 DispatchQueue.main.async { [weak self] in
+                    self?.historyAvailability[entryID] = true
                     self?.lastErrorMessage = nil
                 }
             } catch {
@@ -221,6 +246,7 @@ public final class FinderHistoryModel: ObservableObject {
 
     private func persist(_ records: [HistoryEntry]) {
         history = records
+        refreshAvailability(for: records)
         do {
             try historyStore.save(records)
             logger.debug("Saved Finder history count: \(records.count, privacy: .public)")
@@ -228,6 +254,35 @@ public final class FinderHistoryModel: ObservableObject {
         } catch {
             logger.error("Saving Finder history failed: \(error.localizedDescription, privacy: .public)")
             lastErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshAvailability(for records: [HistoryEntry]) {
+        let entries = records.map { (id: $0.id, url: $0.url) }
+        let availabilityResolver = availabilityResolver
+
+        availabilityQueue.async { [weak self] in
+            let checkedAvailability = Dictionary(
+                uniqueKeysWithValues: entries.map { entry in
+                    (entry.id, availabilityResolver.folderExists(at: entry.url))
+                }
+            )
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self else {
+                    return
+                }
+
+                let currentHistoryIDs = Set(self.history.map(\.id))
+                var nextAvailability = self.historyAvailability.filter { currentHistoryIDs.contains($0.key) }
+                for (id, isAvailable) in checkedAvailability {
+                    guard currentHistoryIDs.contains(id) else {
+                        continue
+                    }
+                    nextAvailability[id] = isAvailable
+                }
+                self.historyAvailability = nextAvailability
+            }
         }
     }
 }

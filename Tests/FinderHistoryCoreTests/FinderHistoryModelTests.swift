@@ -79,9 +79,15 @@ final class FinderHistoryModelTests: XCTestCase {
         }
 
         let client = MockFinderClient(snapshots: [], openDelay: 0.35)
+        let resolver = MockHistoryAvailabilityResolver(isAvailable: true, delay: 0.35)
         let store = HistoryStore(fileURL: tempDirectory.appendingPathComponent("history.json"))
         let defaults = UserDefaults(suiteName: "FinderHistoryModelTests-\(UUID().uuidString)")!
-        let model = FinderHistoryModel(finderClient: client, historyStore: store, defaults: defaults)
+        let model = FinderHistoryModel(
+            finderClient: client,
+            historyStore: store,
+            defaults: defaults,
+            availabilityResolver: resolver
+        )
         let entry = HistoryEntry(
             url: tempDirectory,
             displayName: "Folder",
@@ -95,6 +101,41 @@ final class FinderHistoryModelTests: XCTestCase {
 
         try await waitUntil {
             client.openCallCount == 1
+        }
+    }
+
+    func testRefreshHistoryAvailabilityDoesNotBlockMainActorWhenFileCheckIsSlow() async throws {
+        let tempDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempDirectory)
+        }
+
+        let entry = HistoryEntry(
+            url: tempDirectory,
+            displayName: "Folder",
+            parentPath: tempDirectory.deletingLastPathComponent().path,
+            closedAt: Date()
+        )
+        let client = MockFinderClient(snapshots: [])
+        let resolver = MockHistoryAvailabilityResolver(isAvailable: false, delay: 0.35)
+        let store = HistoryStore(fileURL: tempDirectory.appendingPathComponent("history.json"))
+        try store.save([entry])
+        let defaults = UserDefaults(suiteName: "FinderHistoryModelTests-\(UUID().uuidString)")!
+        let model = FinderHistoryModel(
+            finderClient: client,
+            historyStore: store,
+            defaults: defaults,
+            availabilityResolver: resolver
+        )
+
+        let start = Date()
+        model.refreshHistoryFromDisk()
+        XCTAssertLessThan(Date().timeIntervalSince(start), 0.1)
+
+        try await waitUntil {
+            model.isHistoryEntryAvailable(entry) == false
         }
     }
 
@@ -165,5 +206,22 @@ private final class MockFinderClient: FinderClient, @unchecked Sendable {
         if openDelay > 0 {
             Thread.sleep(forTimeInterval: openDelay)
         }
+    }
+}
+
+private final class MockHistoryAvailabilityResolver: HistoryAvailabilityResolving, @unchecked Sendable {
+    private let isAvailable: Bool
+    private let delay: TimeInterval
+
+    init(isAvailable: Bool, delay: TimeInterval = 0) {
+        self.isAvailable = isAvailable
+        self.delay = delay
+    }
+
+    func folderExists(at url: URL) -> Bool {
+        if delay > 0 {
+            Thread.sleep(forTimeInterval: delay)
+        }
+        return isAvailable
     }
 }

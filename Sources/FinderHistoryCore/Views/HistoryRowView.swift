@@ -2,12 +2,13 @@ import SwiftUI
 
 struct HistoryRowView: View {
     let entry: HistoryEntry
+    let isAvailable: Bool
     let open: () -> Void
     @State private var isHovering = false
 
     var body: some View {
         Group {
-            if entry.isAvailable {
+            if isAvailable {
                 Button(action: open) {
                     rowContent
                 }
@@ -17,15 +18,15 @@ struct HistoryRowView: View {
             }
         }
         .contentShape(Rectangle())
-        .background(isHovering && entry.isAvailable ? Color.accentColor.opacity(0.08) : Color.clear)
+        .background(isHovering && isAvailable ? Color.accentColor.opacity(0.08) : Color.clear)
         .onHover { isHovering = $0 }
         .help(entry.url.path)
     }
 
     private var rowContent: some View {
         HStack(spacing: 10) {
-            Image(systemName: entry.isAvailable ? "folder" : "exclamationmark.triangle")
-                .foregroundStyle(entry.isAvailable ? Color.accentColor : Color.secondary)
+            Image(systemName: isAvailable ? "folder" : "exclamationmark.triangle")
+                .foregroundStyle(isAvailable ? Color.accentColor : Color.secondary)
                 .frame(width: 20)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -41,7 +42,7 @@ struct HistoryRowView: View {
 
             Spacer(minLength: 8)
 
-            if entry.isAvailable {
+            if isAvailable {
                 Image(systemName: "arrow.up.forward.app")
                     .font(.caption)
                     .foregroundStyle(.secondary)
