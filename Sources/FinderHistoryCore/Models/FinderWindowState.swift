@@ -1,6 +1,6 @@
 import Foundation
 
-public struct FinderWindowState: Codable, Equatable {
+public struct FinderWindowState: Codable, Equatable, Sendable {
     public let bounds: FinderWindowBounds?
     public let viewStyle: String?
 
@@ -14,7 +14,7 @@ public struct FinderWindowState: Codable, Equatable {
     }
 }
 
-public struct FinderWindowBounds: Codable, Equatable {
+public struct FinderWindowBounds: Codable, Equatable, Sendable {
     public let left: Int
     public let top: Int
     public let right: Int

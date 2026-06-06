@@ -20,6 +20,7 @@ public final class FinderHistoryModel: ObservableObject {
     private let historyStore: HistoryStore
     private let defaults: UserDefaults
     private let pollInterval: TimeInterval
+    private let openQueue: DispatchQueue
     private let logger = Logger(subsystem: "io.github.dueyama.FinderHistory", category: "history")
     private var previousWindows: [FinderWindowSnapshot]?
     private var timer: Timer?
@@ -30,13 +31,15 @@ public final class FinderHistoryModel: ObservableObject {
         finderClient: FinderClient,
         historyStore: HistoryStore,
         defaults: UserDefaults = .standard,
-        pollInterval: TimeInterval = 2
+        pollInterval: TimeInterval = 2,
+        openQueue: DispatchQueue = DispatchQueue(label: "io.github.dueyama.FinderHistory.open", qos: .userInitiated)
     ) {
         self.finderClient = finderClient
         self.pollingService = FinderPollingService(finderClient: finderClient)
         self.historyStore = historyStore
         self.defaults = defaults
         self.pollInterval = pollInterval
+        self.openQueue = openQueue
 
         do {
             history = HistoryReducer.trimmed(try historyStore.load(), limit: AppPreferences.clampedHistoryLimit(from: defaults))
@@ -183,11 +186,23 @@ public final class FinderHistoryModel: ObservableObject {
             return
         }
 
-        do {
-            try finderClient.openFolder(at: entry.url, restoring: entry.windowState)
-            lastErrorMessage = nil
-        } catch {
-            lastErrorMessage = error.localizedDescription
+        let url = entry.url
+        let windowState = entry.windowState
+        let finderClient = finderClient
+
+        logger.debug("Opening Finder history item: \(url.path, privacy: .public)")
+        openQueue.async { [weak self] in
+            do {
+                try finderClient.openFolder(at: url, restoring: windowState)
+                DispatchQueue.main.async { [weak self] in
+                    self?.lastErrorMessage = nil
+                }
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    self?.logger.error("Opening Finder history item failed: \(error.localizedDescription, privacy: .public)")
+                    self?.lastErrorMessage = error.localizedDescription
+                }
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 import Foundation
 import ApplicationServices
 
-protocol FinderClient {
+protocol FinderClient: Sendable {
     func ensureAccessPermission(askUserIfNeeded: Bool) throws
     func currentWindows() throws -> [FinderWindowSnapshot]
     func openFolder(at url: URL, restoring state: FinderWindowState?) throws

@@ -3,7 +3,7 @@ import ApplicationServices
 import Foundation
 import OSLog
 
-final class AccessibilityFinderClient: FinderClient {
+final class AccessibilityFinderClient: FinderClient, @unchecked Sendable {
     private let finderBundleID = "com.apple.finder"
     private let messagingTimeout: Float = 1.0
     private let logger = Logger(subsystem: "io.github.dueyama.FinderHistory", category: "finder-client")
