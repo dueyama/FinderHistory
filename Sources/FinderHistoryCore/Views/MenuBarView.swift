@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct MenuBarView: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject private var model: FinderHistoryModel
 
     public init(model: FinderHistoryModel) {
@@ -103,6 +104,7 @@ public struct MenuBarView: View {
                 ForEach(model.history) { entry in
                     HistoryRowView(entry: entry) {
                         model.open(entry)
+                        dismiss()
                     }
 
                     if entry.id != model.history.last?.id {
