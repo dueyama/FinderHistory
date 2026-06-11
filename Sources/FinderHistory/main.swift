@@ -19,7 +19,6 @@ struct FinderHistoryApp: App {
 
     init() {
         AppPreferences.registerDefaults()
-        try? LaunchAtLoginController.migrateLegacyPreferenceIfNeeded()
         try? LaunchAtLoginController.synchronizeStoredPreference()
         let model = FinderHistoryModel.live()
         model.start()
